@@ -134,5 +134,5 @@ cost({Xi, Yi}, {Xj, Yj}) ->
      Q4 = math:cos((Longi - Longj)/2.0),
      Q2 = math:sin(Lati + Latj) * Q3 * Q3 - math:sin(Lati - Latj) * Q4 * Q4,
      Q5 = math:cos(Lati - Latj) * Q4 * Q4 - math:cos(Lati + Latj) * Q3 * Q3,
-     (6378388.0 * math:atan2(math:sqrt(Q1*Q1 + Q2*Q2), Q5) + 1.0).
+     erlang:trunc(((6378388.0 * math:atan2(math:sqrt(Q1*Q1 + Q2*Q2), Q5) + 1.0))/1000).
     

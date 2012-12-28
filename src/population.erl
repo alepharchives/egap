@@ -18,7 +18,7 @@ ga(Size, Target, Callback)->
     FitFn = Callback:fit_fn(Target),
     SuccessFn = Callback:success(Target),
     SeedFn = Callback:seed(Target),
-    MutateFn = Callback:mutate(20),
+    MutateFn = Callback:mutate(25),
     CrossoverFn = Callback:crossover(),
     seek(Size, FitFn, SuccessFn, SeedFn, MutateFn, CrossoverFn).
 
@@ -28,9 +28,9 @@ seek(Size, FitFn, SuccessFn, SeedFn, MutateFn, CrossoverFn) ->
     start_workers(SeedFn, FitFn, MutateFn, Size),
     State = #state{n=Size, 
 		   gen=0,
-		   elite_per=10, 
+		   elite_per=05, 
 		   mate_per=30,
-		   tournament_per=2,
+		   tournament_per=5,
 		   crossover_per=100,
 		   success_fn=SuccessFn,
 		   crossover_fn=CrossoverFn},
@@ -86,7 +86,7 @@ choreograph(Sorted, #state{n=N, elite_per=ElitePer, mate_per=MatePer,
 			   crossover_per=CrossoverPer, tournament_per=TPer, 
 			   crossover_fn=CFn})->
 
-    TournSize = erlang:truc(N*(TPer/100)),
+    TournSize = erlang:trunc(N*(TPer/100)),
     {_Elites, NotElite} = lists:split(erlang:trunc(N * (ElitePer/100)), Sorted),
     {Best, Worst} = lists:split(erlang:trunc(N * (MatePer/100)), Sorted),
     Bests = [citizen:get_chromosome(Pid) || {_, Pid} <- Best],
