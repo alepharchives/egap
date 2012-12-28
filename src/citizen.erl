@@ -17,7 +17,7 @@
 		chromosome   ::string(),
 		fittness     :: integer(),
 		fit_fn       ::fun(),
-		mutation_rate
+		mutate_fn    ::fun()
 	       }).
 
 %%%===================================================================
@@ -56,13 +56,13 @@ start_link(ParamList) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([Parent, ChromFn, FitFn, MutationRate]) ->
-    Chromosome = ChromFn(),
-    io:format("[~p] up: ~p~n",[self(), Chromosome]),
+init([Parent, Chromosome, FitFn, MutateFn]) ->
+    io:format("[~p] up.~n",[self()]),
     {ok, #state{coordinator=Parent,
 		chromosome=Chromosome,
 		fit_fn=FitFn,
-		mutation_rate=MutationRate}}.
+		mutate_fn=MutateFn
+		}}.
 
 
 %%--------------------------------------------------------------------
@@ -82,8 +82,8 @@ init([Parent, ChromFn, FitFn, MutationRate]) ->
 handle_call(get_chromosome, _From, #state{chromosome=Ch}= State) ->
     {reply, Ch, State};
 
-handle_call({inject, Chromosome}, _From, #state{mutation_rate=M} = State) ->
-    {reply, ok, State#state{chromosome=mutate(Chromosome, M), fittness=undefined}};
+handle_call({inject, Chromosome}, _From, #state{mutate_fn=MFn}=State) ->
+    {reply, ok, State#state{chromosome=MFn(Chromosome), fittness=undefined}};
 
 handle_call(_Request, _From, State) ->
     Reply = ok,
@@ -101,7 +101,7 @@ handle_call(_Request, _From, State) ->
 %%--------------------------------------------------------------------
 handle_cast(calculate, #state{fit_fn=Fn, chromosome=Chrom, coordinator= Parent}=State) ->
     Fittness = Fn(Chrom),
-    Parent ! {fittness, self(), Fittness},
+    Parent ! {score, self(), Fittness},
     {noreply, State#state{fittness=Fittness}};
 
 handle_cast(stop, State)->
@@ -152,13 +152,3 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
-mutate(Chromosome, Probability) ->
-    case crypto:rand_uniform(0, 100) of
-	X when X =< Probability ->
-	    Chromosome;
-	_ ->
-	    Pos = crypto:rand_uniform(0, length(Chromosome)),
-	    NewChar = crypto:rand_uniform(32, 127),
-	    {Left, Right} = lists:split(Pos, Chromosome),
-	    Left ++ [NewChar] ++ tl(Right)
-    end.
